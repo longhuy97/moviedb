@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:moviedb/detail_person/model/person_model.dart';
+import 'package:moviedb/detail_person/model/personfilm_model.dart';
 import 'package:moviedb/detail_person/network/person_network.dart';
 
 class PersonScreen extends StatefulWidget {
@@ -13,6 +14,7 @@ class _PersonScreenState extends State<PersonScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
   late Future<PersonModel> futurePerson;
+  late Future<PersonFilmModel> futureFilmPerson;
   late int? id;
   _PersonScreenState({this.id});
   @override
@@ -20,6 +22,7 @@ class _PersonScreenState extends State<PersonScreen>
     // TODO: implement initState
     super.initState();
     futurePerson = fetchPerson(id!);
+    futureFilmPerson = fetchFilmPerson(id!);
     _tabController = TabController(length: 2, vsync: this);
   }
 
@@ -168,17 +171,76 @@ class _PersonScreenState extends State<PersonScreen>
                                     ),
                                   ),
                                   //Container second tabBar
-                                  SingleChildScrollView(
-                                    child: Container(
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 18.0, vertical: 10.0),
-                                      margin: EdgeInsets.only(top: 10.0),
-                                      color: Color.fromARGB(255, 44, 44, 44),
-                                      child: Text(
-                                        '${snapshot.data?.biography}',
-                                        style: TextStyle(color: Colors.white),
-                                      ),
-                                    ),
+                                  FutureBuilder<PersonFilmModel>(
+                                    future: futureFilmPerson,
+                                    builder: (context, snapshot) {
+                                      if (snapshot.hasData) {
+                                        return SingleChildScrollView(
+                                          child: Container(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 18.0),
+                                            width: MediaQuery.of(context)
+                                                .size
+                                                .width,
+                                            child: Column(
+                                              children: [
+                                                ...List.generate(
+                                                    snapshot.data!.cast!.length,
+                                                    (index) {
+                                                  if (snapshot
+                                                          .data
+                                                          ?.cast?[index]
+                                                          .posterPath.toString() !=
+                                                      'null') {
+                                                    return Container(
+                                                      margin:
+                                                          EdgeInsets.symmetric(
+                                                              vertical: 10.0),
+                                                      child: Row(
+                                                        children: [
+                                                          CircleAvatar(
+                                                            backgroundImage:
+                                                                NetworkImage(
+                                                                    'https://image.tmdb.org/t/p/w92${snapshot.data?.cast?[index].posterPath}'),
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 30,
+                                                          ),
+                                                          Container(
+                                                            width: MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .width *
+                                                                0.7,
+                                                            child: Text(
+                                                              '${snapshot.data?.cast?[index].originalTitle} ',
+                                                              style: const TextStyle(
+                                                                  color: Colors
+                                                                      .white,
+                                                                  fontSize:
+                                                                      20.0),
+                                                              maxLines: 1,
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  } else {
+                                                    return SizedBox();
+                                                  }
+                                                })
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      } else if (snapshot.hasError) {
+                                        return Text('${snapshot.error}');
+                                      }
+                                      return const CircularProgressIndicator();
+                                    },
                                   ),
                                 ],
                               ))
